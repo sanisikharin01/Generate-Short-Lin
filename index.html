@@ -69,37 +69,40 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
     <script>
-        function generateShortLink() {
-            const longUrl = document.getElementById('longUrl').value;
-            if (longUrl) {
-                // Send the URL to an API that shortens URLs (like TinyURL or Bitly)
-                fetch(`https://api.shrtco.de/v2/shorten?url=${longUrl}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const shortLink = data.result.full_short_link;
-                        document.getElementById('shortLinkOutput').innerHTML = `
-                            <p>Shortened Link: <a href="${shortLink}" target="_blank">${shortLink}</a></p>
-                        `;
-                        generateQRCode(shortLink); // Generate QR Code for the shortened URL
-                    })
-                    .catch(error => {
-                        console.error('Error shortening the URL:', error);
-                        alert('There was an error generating the short link.');
-                    });
-            } else {
-                alert('Please enter a URL.');
-            }
-        }
+      function generateShortLink() {
+    const longUrl = document.getElementById('longUrl').value;
 
-        function generateQRCode(url) {
-            const qrCodeContainer = document.getElementById('qrCode');
-            qrCodeContainer.innerHTML = ''; // Clear previous QR Code
-            new QRCode(qrCodeContainer, {
-                text: url,
-                width: 128,
-                height: 128
-            });
-        }
+    if (!/^https?:\/\/[^\s]+$/.test(longUrl)) {
+        alert("กรุณากรอก URL ที่ถูกต้อง โดยเริ่มต้นด้วย http:// หรือ https://");
+        return;
+    }
+
+    fetch(`https://api.shrtco.de/v2/shorten?url=${longUrl}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const shortLink = data.result.full_short_link;
+            document.getElementById('shortLinkOutput').innerHTML = `
+                <p>Shortened Link: <a href="${shortLink}" target="_blank">${shortLink}</a></p>
+            `;
+            generateQRCode(shortLink);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('ไม่สามารถสร้างลิงก์สั้นได้ กรุณาลองใหม่อีกครั้ง');
+        });
+}
+
+function generateQRCode(shortLink) {
+    const qrCodeContainer = document.getElementById('qrCode');
+    qrCodeContainer.innerHTML = ''; // ล้าง QR Code เก่า
+    new QRCode(qrCodeContainer, shortLink); // สร้าง QR Code ใหม่
+}
+
     </script>
 </body>
 </html>
